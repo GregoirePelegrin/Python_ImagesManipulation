@@ -24,6 +24,7 @@ segments = slic(image, start_label = 1, n_segments = numSegments, sigma = 5)
 print("SLIC done")
 rectedImage = np.zeros(image.shape, dtype=float)
 
+print("Step 1: Lists creation")
 xs = []
 ys = []
 reds = []
@@ -35,6 +36,9 @@ for i in range(numSegments):
 	reds.append([])
 	greens.append([])
 	blues.append([])
+	if(i % int(numSegments/10) == 0):
+		print("[Step 1]: {}% completed".format(i/numSegments*100))
+print("[Step 1]: 100% completed\nStep 2: Lists generation")
 for x in range(image.shape[0]):
 	for y in range(image.shape[1]):
 		xs[segments[x][y]].append(x)
@@ -42,10 +46,15 @@ for x in range(image.shape[0]):
 		reds[segments[x][y]].append(image[x][y][0])
 		greens[segments[x][y]].append(image[x][y][1])
 		blues[segments[x][y]].append(image[x][y][2])
+	if(x % int(image.shape[0]/10) == 0):
+		print("[Step 2]: {}% completed".format(x/image.shape[0]*100))
 
+print("[Step 2]: 100% completed\nStep 3: Color means calculation")
 meanReds = []
 meanGreens = []
 meanBlues = []
+count = 0
+maxi = len(reds)
 for _reds,_greens,_blues in zip(reds,greens,blues):
 	red = 0
 	green = 0
@@ -66,8 +75,14 @@ for _reds,_greens,_blues in zip(reds,greens,blues):
 		meanBlues.append(0)
 	else:
 		meanBlues.append(blue / len(_blues))
+	count += 1
+	if(count % int(maxi/10) == 0):
+		print("[Step 3]: {}% completed".format(count/maxi*100))
 
+print("[Step 3]: 100% completed\nStep 4: Rectangle list generation")
 rectList = []
+count = 0
+maxi = len(xs)
 for _xs,_ys,red,green,blue in zip(xs, ys,meanReds,meanGreens,meanBlues):
 	if(len(_xs) != 0 and len(_ys) != 0):
 		minX = _xs[0]
@@ -85,6 +100,9 @@ for _xs,_ys,red,green,blue in zip(xs, ys,meanReds,meanGreens,meanBlues):
 			elif y > maxY:
 				maxY = y
 		rectList.append((minX, maxX, minY, maxY, red, green, blue))
+	count += 1
+	if(count % int(maxi/10) == 0):
+		print("[Step 4]: {}% completed".format(count/maxi*100))
 
 def insertion(list1, list2):
 	for i in range(len(list2)):
@@ -97,6 +115,8 @@ def insertion(list1, list2):
 			j -= 1
 		list2[j] = element1
 		list1[j] = element2
+		if(i % int(len(list2)/200) == 0):
+			print("[Step 5]: {:.1f}% completed".format(i/len(list2)*100))
 
 # Sorting rectList
 def sorting(inputList):
@@ -106,17 +126,21 @@ def sorting(inputList):
 	# Tri non récursif
 	insertion(inputList, calcList)
 
+print("[Step 4]: 100% completed\nStep 5: Sorting the list")
 sorting(rectList)
 
+print("[Step 5]: 100% completed\nStep 6: Modifying output image")
 # Display rectList
-for rect in rectList:
+for i,rect in enumerate(rectList):
 	for x in range(rect[0], rect[1] + 1):
 		for y in range(rect[2], rect[3] + 1):
 			rectedImage[x][y][0] = rect[4]
 			rectedImage[x][y][1] = rect[5]
 			rectedImage[x][y][2] = rect[6]
+	if(i % int(len(rectList)/10) == 0):
+		print("[Step 6]: {}% completed".format(i/len(rectList)*100))		
 
-print("Display Image")
+print("[Step 6]: 100% completed\nDisplay Image")
 fig = plt.figure("Sorted RectedImage -- {} segments".format(numSegments))
 ax = fig.add_subplot(1, 1, 1)
 ax.imshow(rectedImage)
