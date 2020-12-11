@@ -1,7 +1,8 @@
+# Add prints during execution
+
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-from datetime import datetime
 from skimage.segmentation import slic
 from skimage.segmentation import mark_boundaries
 from skimage.util import img_as_float
@@ -9,7 +10,6 @@ from skimage import io
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required = True, help = "Path to the image")
@@ -22,10 +22,8 @@ print("Doing SLIC")
 numSegments = int(args["nbSegments"])
 segments = slic(image, start_label = 1, n_segments = numSegments, sigma = 5)
 print("SLIC done")
-segmentedImage = np.zeros(image.shape, dtype = float)
 rectedImage = np.zeros(image.shape, dtype=float)
 
-# Form xs, ys, reds, greens, blues lists
 xs = []
 ys = []
 reds = []
@@ -44,11 +42,7 @@ for x in range(image.shape[0]):
 		reds[segments[x][y]].append(image[x][y][0])
 		greens[segments[x][y]].append(image[x][y][1])
 		blues[segments[x][y]].append(image[x][y][2])
-	if x % (int(image.shape[0]/100)) == 0:
-		print("[Step 1-Lists Creation]: {0:.1f}%".format(x / image.shape[0] * 100))
-print("[Step 1]: 100% Complete")
 
-# Form meanReds, meanGreens, meanBlues lists
 meanReds = []
 meanGreens = []
 meanBlues = []
@@ -73,8 +67,7 @@ for _reds,_greens,_blues in zip(reds,greens,blues):
 	else:
 		meanBlues.append(blue / len(_blues))
 
-# Modify new images
-i = 0
+rectList = []
 for _xs,_ys,red,green,blue in zip(xs, ys,meanReds,meanGreens,meanBlues):
 	if(len(_xs) != 0 and len(_ys) != 0):
 		minX = _xs[0]
@@ -82,10 +75,6 @@ for _xs,_ys,red,green,blue in zip(xs, ys,meanReds,meanGreens,meanBlues):
 		maxX = _xs[0]
 		maxY = _ys[0]
 	for x,y in zip(_xs,_ys):
-		segmentedImage[x][y][0] = red
-		segmentedImage[x][y][1] = green
-		segmentedImage[x][y][2] = blue
-
 		if(len(_xs) != 0 and len(_ys) != 0):
 			if x < minX:
 				minX = x
@@ -95,32 +84,41 @@ for _xs,_ys,red,green,blue in zip(xs, ys,meanReds,meanGreens,meanBlues):
 				minY = y
 			elif y > maxY:
 				maxY = y
-	if(len(_xs) != 0 and len(_ys) != 0):
-		for x in range(minX, maxX+1):
-			for y in range(minY, maxY+1):
-				rectedImage[x][y][0] = red
-				rectedImage[x][y][1] = green
-				rectedImage[x][y][2] = blue
-	if i % (int(len(xs)/100)) == 0:		# [100] must be < to numSegments
-		print("[Step 2-Image Modification]: {}%".format(i / len(xs) * 100))
-	i += 1
-print("[Step 2]: 100% Complete")
+		rectList.append((minX, maxX, minY, maxY, red, green, blue))
 
-name = "OutputImage\\Optimized_Image"
-date = datetime.now()
-print("Display Images")
-fig = plt.figure("Optimized Superpixels -- {} segments".format(numSegments))
-ax = fig.add_subplot(1, 1, 1)
-ax.imshow(segmentedImage)
-plt.axis("off")
-nameSave = "{}--Superpixels_{}-{}_{}_{}-{}_{}_{}.png".format(name, numSegments,
-	date.day, date.month, date.year, date.second, date.minute, date.hour)
-plt.savefig(nameSave)
-fig = plt.figure("Optimized RectedImage -- {} segments".format(numSegments))
+def insertion(list1, list2):
+	for i in range(len(list2)):
+		element1 = list2[i]
+		element2 = list1[i]
+		j = i
+		while j>0 and list2[j-1]>element1:
+			list2[j] = list2[j-1]
+			list1[j] = list1[j-1]
+			j -= 1
+		list2[j] = element1
+		list1[j] = element2
+
+# Sorting rectList
+def sorting(inputList):
+	calcList = []
+	for rect in inputList:
+		calcList.append(rect[1]-rect[0] * rect[3]-rect[2])
+	# Tri non récursif
+	insertion(inputList, calcList)
+
+sorting(rectList)
+
+# Display rectList
+for rect in rectList:
+	for x in range(rect[0], rect[1] + 1):
+		for y in range(rect[2], rect[3] + 1):
+			rectedImage[x][y][0] = rect[4]
+			rectedImage[x][y][1] = rect[5]
+			rectedImage[x][y][2] = rect[6]
+
+print("Display Image")
+fig = plt.figure("Sorted RectedImage -- {} segments".format(numSegments))
 ax = fig.add_subplot(1, 1, 1)
 ax.imshow(rectedImage)
 plt.axis("off")
-nameSave = "{}--Rected_{}-{}_{}_{}-{}_{}_{}.png".format(name, numSegments,
-	date.day, date.month, date.year, date.second, date.minute, date.hour)
-plt.savefig(nameSave)
 plt.show()
