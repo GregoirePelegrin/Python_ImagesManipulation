@@ -1,8 +1,7 @@
-# Add prints during execution
-
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
+from datetime import datetime
 from skimage.segmentation import slic
 from skimage.segmentation import mark_boundaries
 from skimage.util import img_as_float
@@ -11,6 +10,7 @@ from tqdm import tqdm
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required = True, help = "Path to the image")
@@ -117,9 +117,14 @@ for progress,rect in zip(tqdm(range(len(rectList)), desc="Step 6: Modifying outp
 			rectedImage[x][y][1] = rect[5]
 			rectedImage[x][y][2] = rect[6]
 
+name = "OutputImage\\Optimized_Image"
+date = datetime.now()
 print("Display Image")
 fig = plt.figure("Sorted RectedImage -- {} segments".format(numSegments))
 ax = fig.add_subplot(1, 1, 1)
 ax.imshow(rectedImage)
 plt.axis("off")
+nameSave = "{}--SortedRectangles_{}-{}_{}_{}-{}_{}_{}.png".format(name, numSegments,
+	date.day, date.month, date.year, date.second, date.minute, date.hour)
+plt.savefig(nameSave)
 plt.show()
