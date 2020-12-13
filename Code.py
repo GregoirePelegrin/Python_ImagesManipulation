@@ -115,7 +115,7 @@ for progress,rect in zip(tqdm(range(len(rectList)), desc="Step 6: Modifying outp
 		for y in range(rect[2], rect[3] + 1):
 			rectedImage[x][y][0] = rect[4]
 			rectedImage[x][y][1] = rect[5]
-			rectedImage[x][y][2] = rect[6]	
+			rectedImage[x][y][2] = rect[6]
 
 print("Display Image")
 fig = plt.figure("Sorted RectedImage -- {} segments".format(numSegments))
