@@ -75,16 +75,16 @@ for progress,_xs,_ys,red,green,blue in zip(tqdm(range(len(xs)), desc="Step 4: Re
 		minY = _ys[0]
 		maxX = _xs[0]
 		maxY = _ys[0]
-	for x,y in zip(_xs,_ys):
-		if(len(_xs) != 0 and len(_ys) != 0):
-			if x < minX:
-				minX = x
-			elif x > maxX:
-				maxX = x
-			if y < minY:
-				minY = y
-			elif y > maxY:
-				maxY = y
+		for x,y in zip(_xs,_ys):
+			if(len(_xs) != 0 and len(_ys) != 0):
+				if x < minX:
+					minX = x
+				elif x > maxX:
+					maxX = x
+				if y < minY:
+					minY = y
+				elif y > maxY:
+					maxY = y
 		rectList.append((minX, maxX, minY, maxY, red, green, blue))
 
 def insertion(list1, list2):
@@ -92,7 +92,7 @@ def insertion(list1, list2):
 		element1 = list2[i]
 		element2 = list1[i]
 		j = i
-		while j>0 and list2[j-1]>element1:
+		while j>0 and list2[j-1]<element1:
 			list2[j] = list2[j-1]
 			list1[j] = list1[j-1]
 			j -= 1
