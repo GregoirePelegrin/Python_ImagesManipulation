@@ -1,13 +1,16 @@
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
+from datetime import datetime
 from skimage.segmentation import slic
 from skimage.segmentation import mark_boundaries
 from skimage.util import img_as_float
 from skimage import io
+from tqdm import tqdm
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required = True, help = "Path to the image")
@@ -22,7 +25,7 @@ print("SLIC done")
 segmentedImage = np.zeros(image.shape, dtype = float)
 rectedImage = np.zeros(image.shape, dtype=float)
 # Loop through all possible values for segments[x][y] (0->numSegments)
-for label in range(numSegments):
+for progress,label in zip(tqdm(range(numSegments), desc="Progress", ascii=True, ncols=125),range(numSegments)):
 	# For each value, get the xs and ys for the correspondant area
 	xs = []
 	ys = []
@@ -33,7 +36,6 @@ for label in range(numSegments):
 				ys.append(y)
 	if(len(xs) == 0 or len(ys) == 0):
 		continue
-	# 1/ Areas with same color
 	# Get the mean values for red, green and blue in the image for these xs and ys (values between 0 and 1)
 	red = 0
 	green = 0
@@ -50,34 +52,14 @@ for label in range(numSegments):
 		segmentedImage[x][y][0] = red
 		segmentedImage[x][y][1] = green
 		segmentedImage[x][y][2] = blue
-	# 2/ Big squares instead of wobbly shapes
-	# May be necessary to plot the bigger squares first with an external list and plotting outside the for loop
-	# Pay attention to the fact that in this case, i'd need a list for the colors to be displayed
-	minX = xs[0]
-	minY = ys[0]
-	maxX = xs[0]
-	maxY = ys[0]
-	for x,y in zip(xs,ys):
-		if x < minX:
-			minX = x
-		elif x > maxX:
-			maxX = x
-		if y < minY:
-			minY = y
-		elif y > maxY:
-			maxY = y
-	for x in range(minX, maxX+1):
-		for y in range(minY, maxY+1):
-			rectedImage[x][y][0] = red
-			rectedImage[x][y][1] = green
-			rectedImage[x][y][2] = blue
 
+name = "OutputImage\\Superpixelize"
+date = datetime.now()
 fig = plt.figure("Superpixels -- {} segments".format(numSegments))
 ax = fig.add_subplot(1, 1, 1)
 ax.imshow(segmentedImage)
 plt.axis("off")
-fig = plt.figure("RectedImage -- {} segments".format(numSegments))
-ax = fig.add_subplot(1, 1, 1)
-ax.imshow(rectedImage)
-plt.axis("off")
+nameSave = "{}--Superpixeled_{}-{}_{}_{}-{}_{}_{}.png".format(name, numSegments,
+	date.day, date.month, date.year, date.second, date.minute, date.hour)
+plt.savefig(nameSave)
 plt.show()
